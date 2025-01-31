@@ -128,68 +128,69 @@ with tabs[2]:
         total = revenus + autres_revenus
         st.metric("TOTAL DES REVENUS", f"{total} €")
 
-# Fonction pour générer le PDF
-def generer_pdf():
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    
-    # Ajout du logo ORPI
-    # c.drawImage("logo_orpi.png", 50, 750, width=100, height=50)
-    
-    # Titre
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, 800, "Dossier de candidature location ORPI")
-    
-    # Informations personnelles
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, 750, "Informations personnelles")
-    c.setFont("Helvetica", 10)
-    c.drawString(50, 730, f"Nom: {nom}")
-    c.drawString(50, 715, f"Prénom: {prenom}")
-    # ... Ajoutez toutes les autres informations ...
-    
-    c.save()
-    buffer.seek(0)
-    return buffer
+    # Fonction pour générer le PDF
+    def generer_pdf():
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        
+        # Titre
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, 800, "Dossier de candidature location ORPI")
+        
+        # Informations personnelles
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, 750, "Informations personnelles")
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 730, f"Nom: {nom}")
+        c.drawString(50, 715, f"Prénom: {prenom}")
+        # ... Ajoutez toutes les autres informations ...
+        
+        c.save()
+        buffer.seek(0)
+        return buffer
 
-# Fonction pour envoyer le PDF par email
-def envoyer_pdf(pdf_buffer):
-    expediteur = "skita@orpi.com"
-    destinataire = "kcouret@orpi.com" if conseiller == "Killian COURET" else "skita@orpi.com"
-    
-    msg = MIMEMultipart()
-    msg['From'] = expediteur
-    msg['To'] = destinataire
-    msg['Subject'] = f"Nouveau dossier de candidature - {nom} {prenom}"
-    
-    corps_message = f"Bonjour,\n\nVeuillez trouver ci-joint le dossier de candidature de {nom} {prenom}.\n\nCordialement"
-    msg.attach(MIMEText(corps_message))
-    
-    pdf_attachment = MIMEApplication(pdf_buffer.getvalue(), _subtype="pdf")
-    pdf_attachment.add_header('Content-Disposition', 'attachment', filename=f"dossier_candidature_{nom}_{prenom}.pdf")
-    msg.attach(pdf_attachment)
-    
-    # Configuration du serveur SMTP
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(st.secrets["EMAIL_ADDRESS"], st.secrets["GMAIL_APP_PASSWORD"])  # On utilisera le mot de passe d'application ici
-    server.send_message(msg)
-    server.quit()
+    # Fonction pour envoyer le PDF par email
+    def envoyer_pdf(pdf_buffer):
+        expediteur = "skita@orpi.com"
+        destinataire = "kcouret@orpi.com" if conseiller == "Killian COURET" else "skita@orpi.com"
+        
+        msg = MIMEMultipart()
+        msg['From'] = expediteur
+        msg['To'] = destinataire
+        msg['Subject'] = f"Nouveau dossier de candidature - {nom} {prenom}"
+        
+        corps_message = f"Bonjour,\n\nVeuillez trouver ci-joint le dossier de candidature de {nom} {prenom}.\n\nCordialement"
+        msg.attach(MIMEText(corps_message))
+        
+        pdf_attachment = MIMEApplication(pdf_buffer.getvalue(), _subtype="pdf")
+        pdf_attachment.add_header('Content-Disposition', 'attachment', filename=f"dossier_candidature_{nom}_{prenom}.pdf")
+        msg.attach(pdf_attachment)
+        
+        # Configuration du serveur SMTP
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(st.secrets["EMAIL_ADDRESS"], st.secrets["GMAIL_APP_PASSWORD"])
+        server.send_message(msg)
+        server.quit()
 
-# Bouton de soumission
-if st.button("Soumettre le dossier"):
-    with st.spinner("Génération du PDF en cours..."):
-        pdf = generer_pdf()
-    
-    with st.spinner("Envoi par email en cours..."):
-        try:
-            envoyer_pdf(pdf)
-            st.success("Dossier envoyé avec succès!")
-        except Exception as e:
-            st.error(f"Erreur lors de l'envoi: {str(e)}")
-            st.download_button(
-                label="Télécharger le PDF",
-                data=pdf,
-                file_name=f"dossier_candidature_{nom}_{prenom}.pdf",
-                mime="application/pdf"
-            )
+    # Bouton de soumission uniquement dans l'onglet Ressources
+    if st.button("Soumettre le dossier"):
+        # Vérification que les champs obligatoires sont remplis
+        if not nom or not prenom or not profession or not revenus:
+            st.error("Veuillez remplir tous les champs obligatoires dans tous les onglets.")
+        else:
+            with st.spinner("Génération du PDF en cours..."):
+                pdf = generer_pdf()
+            
+            with st.spinner("Envoi par email en cours..."):
+                try:
+                    envoyer_pdf(pdf)
+                    st.success("Dossier envoyé avec succès!")
+                except Exception as e:
+                    st.error(f"Erreur lors de l'envoi: {str(e)}")
+                    st.download_button(
+                        label="Télécharger le PDF",
+                        data=pdf,
+                        file_name=f"dossier_candidature_{nom}_{prenom}.pdf",
+                        mime="application/pdf"
+                    )
