@@ -33,12 +33,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Titre et introduction
+st.image("https://www.orpi.com/assets/logo-c1577257e2ef740f1763413a89583f2f.svg", width=200)
 st.title("Dossier de candidature location")
 
 # Sélection du conseiller
 conseiller = st.selectbox(
     "Sélectionnez votre conseiller",
-    ["Killian COURET"]
+    ["Killian COURET", "Samuel KITA"]
 )
 
 # Création des onglets pour séparer les informations
@@ -150,7 +151,7 @@ def generer_pdf():
 # Fonction pour envoyer le PDF par email
 def envoyer_pdf(pdf_buffer):
     expediteur = "skita@orpi.com"
-    destinataire = "kcouret@orpi.com" if conseiller == "Killian COURET" else ""
+    destinataire = "kcouret@orpi.com" if conseiller == "Killian COURET" else "skita@orpi.com"
     
     msg = MIMEMultipart()
     msg['From'] = expediteur
@@ -164,12 +165,12 @@ def envoyer_pdf(pdf_buffer):
     pdf_attachment.add_header('Content-Disposition', 'attachment', filename=f"dossier_candidature_{nom}_{prenom}.pdf")
     msg.attach(pdf_attachment)
     
-    # Configuration du serveur SMTP (à adapter selon votre configuration)
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    # Configuration du serveur SMTP
+    server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
-    # server.login(expediteur, "votre_mot_de_passe")
-    # server.send_message(msg)
-    # server.quit()
+    server.login(st.secrets["EMAIL_ADDRESS"], st.secrets["GMAIL_APP_PASSWORD"])  # On utilisera le mot de passe d'application ici
+    server.send_message(msg)
+    server.quit()
 
 # Bouton de soumission
 if st.button("Soumettre le dossier"):
