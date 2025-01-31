@@ -1,7 +1,6 @@
 import streamlit as st
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -9,10 +8,14 @@ from email.mime.application import MIMEApplication
 import io
 from datetime import datetime
 
-# Configuration de la page
-st.set_page_config(page_title="Dossier de candidature ORPI", page_icon="🏠", layout="wide")
+# Configuration de la page Streamlit
+st.set_page_config(
+    page_title="Dossier de candidature ORPI",
+    page_icon="🏠",
+    layout="centered"
+)
 
-# Style CSS
+# Style CSS personnalisé
 st.markdown("""
     <style>
     .stButton>button {
@@ -23,228 +26,226 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #B5021F;
     }
-    .stExpander {
-        background-color: #ffffff;
-        border: 1px solid #e6e6e6;
-        border-radius: 4px;
-        margin-bottom: 1rem;
+    .main {
+        padding: 2rem;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# Titre et introduction
 st.title("Dossier de candidature location")
-conseiller = st.selectbox("Sélectionnez votre conseiller", ["Killian COURET", "Samuel KITA"])
-tabs = st.tabs(["Locataire", "Garant", "Finalisation"])
 
-# Onglet Locataire
+# Sélection du conseiller
+conseiller = st.selectbox(
+    "Sélectionnez votre conseiller",
+    ["Killian COURET", "Samuel KITA"]
+)
+
+# Création des onglets pour séparer les informations
+tabs = st.tabs(["Informations personnelles", "Situation professionnelle", "Ressources"])
+
+# Onglet Informations personnelles
 with tabs[0]:
-    st.header("Informations du locataire")
+    st.subheader("Vos informations")
     
-    with st.expander("État civil", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            nom_loc = st.text_input("NOM", key="nom_loc")
-            nom_jeune_fille_loc = st.text_input("NOM DE JEUNE FILLE", key="nom_jf_loc")
-            prenom_loc = st.text_input("PRÉNOM", key="prenom_loc")
-        with col2:
-            date_naissance_loc = st.date_input("DATE DE NAISSANCE", min_value=datetime(1940, 1, 1), max_value=datetime.now(), format="DD/MM/YYYY", key="date_naiss_loc")
-            lieu_naissance_loc = st.text_input("LIEU DE NAISSANCE", key="lieu_naiss_loc")
-            departement_loc = st.text_input("DÉPARTEMENT", key="dep_loc")
-            pays_loc = st.text_input("PAYS", key="pays_loc")
-            nationalite_loc = st.text_input("NATIONALITÉ", key="nat_loc")
+    col1, col2 = st.columns(2)
+    with col1:
+        nom = st.text_input("NOM")
+        nom_jeune_fille = st.text_input("NOM DE JEUNE FILLE (si applicable)")
+        prenom = st.text_input("PRÉNOM")
         
-        situation_loc = st.selectbox("SITUATION", ["Célibataire", "Marié(e)", "En instance de divorce", "Pacsé(e)", "Divorcé(e)"], key="sit_loc")
+    with col2:
+        date_naissance = st.date_input(
+            "DATE DE NAISSANCE",
+            min_value=datetime(1940, 1, 1),
+            max_value=datetime.now(),
+            format="DD/MM/YYYY"
+        )
+        lieu_naissance = st.text_input("LIEU DE NAISSANCE")
+        departement = st.text_input("DÉPARTEMENT")
 
-    with st.expander("Coordonnées", expanded=True):
-        col3, col4 = st.columns(2)
-        with col3:
-            adresse_loc = st.text_input("ADRESSE ACTUELLE", key="adr_loc")
-            code_postal_loc = st.text_input("CODE POSTAL", key="cp_loc")
-            ville_loc = st.text_input("VILLE", key="ville_loc")
-        with col4:
-            telephone_loc = st.text_input("TÉLÉPHONE", key="tel_loc")
-            email_loc = st.text_input("EMAIL", key="email_loc")
+    col3, col4 = st.columns(2)
+    with col3:
+        pays = st.text_input("PAYS")
+        nationalite = st.text_input("NATIONALITÉ")
+        
+    with col4:
+        situation = st.selectbox(
+            "SITUATION",
+            ["Célibataire", "Marié(e)", "En instance de divorce", "Pacsé(e)", "Divorcé(e)"]
+        )
+        
+    st.subheader("Contact")
+    col5, col6 = st.columns(2)
+    with col5:
+        adresse = st.text_input("ADRESSE ACTUELLE")
+        code_postal = st.text_input("CODE POSTAL")
+        ville = st.text_input("VILLE")
+        
+    with col6:
+        telephone = st.text_input("TÉLÉPHONE")
+        email = st.text_input("EMAIL")
+        
+    st.subheader("Situation actuelle")
+    col7, col8 = st.columns(2)
+    with col7:
+        situation_logement = st.radio(
+            "Actuellement, vous êtes :",
+            ["Propriétaire", "Locataire", "Hébergé"]
+        )
+    with col8:
+        nb_enfants = st.number_input("NOMBRE D'ENFANTS AU FOYER", min_value=0)
+        if nb_enfants > 0:
+            ages_enfants = st.text_input("ÂGE DES ENFANTS (séparés par des virgules)")
 
-    with st.expander("Situation actuelle", expanded=True):
-        col5, col6 = st.columns(2)
-        with col5:
-            situation_logement_loc = st.radio("Actuellement, vous êtes :", ["Propriétaire", "Locataire", "Hébergé"], key="log_loc")
-        with col6:
-            nb_enfants_loc = st.number_input("NOMBRE D'ENFANTS AU FOYER", min_value=0, key="enfants_loc")
-            if nb_enfants_loc > 0:
-                ages_enfants_loc = st.text_input("ÂGE DES ENFANTS", key="ages_loc")
-
-    with st.expander("Situation professionnelle", expanded=True):
-        col7, col8 = st.columns(2)
-        with col7:
-            profession_loc = st.text_input("PROFESSION", key="prof_loc")
-            employeur_loc = st.text_input("EMPLOYEUR", key="emp_loc")
-            date_embauche_loc = st.date_input("DATE D'EMBAUCHE", key="date_emb_loc")
-        with col8:
-            adresse_employeur_loc = st.text_input("ADRESSE DE L'EMPLOYEUR", key="adr_emp_loc")
-            cp_employeur_loc = st.text_input("CODE POSTAL DE L'EMPLOYEUR", key="cp_emp_loc")
-            ville_employeur_loc = st.text_input("VILLE DE L'EMPLOYEUR", key="ville_emp_loc")
-            tel_employeur_loc = st.text_input("TÉLÉPHONE DE L'EMPLOYEUR", key="tel_emp_loc")
-
-    with st.expander("Ressources", expanded=True):
-        col9, col10 = st.columns(2)
-        with col9:
-            revenus_loc = st.number_input("REVENUS MENSUELS (€)", min_value=0.0, step=100.0, key="rev_loc")
-            autres_revenus_loc = st.number_input("AUTRES REVENUS JUSTIFIÉS (€)", min_value=0.0, step=100.0, key="autres_rev_loc")
-        with col10:
-            total_loc = revenus_loc + autres_revenus_loc
-            st.metric("TOTAL DES REVENUS", f"{total_loc:,.2f} €")
-
-# Onglet Garant
+# Onglet Situation professionnelle
 with tabs[1]:
-    st.header("Informations du garant")
+    st.subheader("Votre situation professionnelle")
     
-    with st.expander("État civil", expanded=True):
-        col11, col12 = st.columns(2)
-        with col11:
-            nom_gar = st.text_input("NOM", key="nom_gar")
-            nom_jeune_fille_gar = st.text_input("NOM DE JEUNE FILLE", key="nom_jf_gar")
-            prenom_gar = st.text_input("PRÉNOM", key="prenom_gar")
-        with col12:
-            date_naissance_gar = st.date_input("DATE DE NAISSANCE", min_value=datetime(1940, 1, 1), max_value=datetime.now(), format="DD/MM/YYYY", key="date_naiss_gar")
-            lieu_naissance_gar = st.text_input("LIEU DE NAISSANCE", key="lieu_naiss_gar")
-            departement_gar = st.text_input("DÉPARTEMENT", key="dep_gar")
-            pays_gar = st.text_input("PAYS", key="pays_gar")
-            nationalite_gar = st.text_input("NATIONALITÉ", key="nat_gar")
+    col9, col10 = st.columns(2)
+    with col9:
+        profession = st.text_input("PROFESSION")
+        employeur = st.text_input("EMPLOYEUR")
         
-        situation_gar = st.selectbox("SITUATION", ["Célibataire", "Marié(e)", "En instance de divorce", "Pacsé(e)", "Divorcé(e)"], key="sit_gar")
+    with col10:
+        date_embauche = st.date_input("DATE D'EMBAUCHE")
+        
+    adresse_employeur = st.text_input("ADRESSE DE L'EMPLOYEUR")
+    cp_employeur = st.text_input("CODE POSTAL DE L'EMPLOYEUR")
+    ville_employeur = st.text_input("VILLE DE L'EMPLOYEUR")
+    tel_employeur = st.text_input("TÉLÉPHONE DE L'EMPLOYEUR")
 
-    with st.expander("Coordonnées", expanded=True):
-        col13, col14 = st.columns(2)
-        with col13:
-            adresse_gar = st.text_input("ADRESSE ACTUELLE", key="adr_gar")
-            code_postal_gar = st.text_input("CODE POSTAL", key="cp_gar")
-            ville_gar = st.text_input("VILLE", key="ville_gar")
-        with col14:
-            telephone_gar = st.text_input("TÉLÉPHONE", key="tel_gar")
-            email_gar = st.text_input("EMAIL", key="email_gar")
-
-    with st.expander("Situation professionnelle", expanded=True):
-        col15, col16 = st.columns(2)
-        with col15:
-            profession_gar = st.text_input("PROFESSION", key="prof_gar")
-            employeur_gar = st.text_input("EMPLOYEUR", key="emp_gar")
-            date_embauche_gar = st.date_input("DATE D'EMBAUCHE", key="date_emb_gar")
-        with col16:
-            adresse_employeur_gar = st.text_input("ADRESSE DE L'EMPLOYEUR", key="adr_emp_gar")
-            cp_employeur_gar = st.text_input("CODE POSTAL DE L'EMPLOYEUR", key="cp_emp_gar")
-            ville_employeur_gar = st.text_input("VILLE DE L'EMPLOYEUR", key="ville_emp_gar")
-            tel_employeur_gar = st.text_input("TÉLÉPHONE DE L'EMPLOYEUR", key="tel_emp_gar")
-
-    with st.expander("Ressources", expanded=True):
-        col17, col18 = st.columns(2)
-        with col17:
-            revenus_gar = st.number_input("REVENUS MENSUELS (€)", min_value=0.0, step=100.0, key="rev_gar")
-            autres_revenus_gar = st.number_input("AUTRES REVENUS JUSTIFIÉS (€)", min_value=0.0, step=100.0, key="autres_rev_gar")
-        with col18:
-            total_gar = revenus_gar + autres_revenus_gar
-            st.metric("TOTAL DES REVENUS", f"{total_gar:,.2f} €")
-
-# Onglet Finalisation
+# Onglet Ressources
 with tabs[2]:
-    st.header("Finalisation du dossier")
+    st.subheader("Vos ressources mensuelles")
     
-    st.warning("En soumettant ce dossier, je certifie que les renseignements fournis sont sincères et véritables.")
-    
-    col19, col20 = st.columns(2)
-    with col19:
-        sign_date = st.date_input("Date du jour", format="DD/MM/YYYY", key="sign_date")
-        sign_lieu = st.text_input("Fait à", key="sign_lieu")
+    col11, col12 = st.columns(2)
+    with col11:
+        revenus = st.number_input("REVENUS MENSUELS (€)", min_value=0.0, step=100.0)
+        autres_revenus = st.number_input("AUTRES REVENUS JUSTIFIÉS (€)", min_value=0.0, step=100.0)
+        
+    with col12:
+        total = revenus + autres_revenus
+        st.metric("TOTAL DES REVENUS", f"{total} €")
 
+    # Fonction pour générer le PDF
     def generer_pdf():
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
-        width, height = A4
-
-        def draw_header(title):
-            c.setFillColor(colors.HexColor('#E4032E'))
-            c.rect(0, height-100, width, 100, fill=1)
-            c.setFillColor('white')
-            c.setFont("Helvetica-Bold", 24)
-            c.drawString(50, height-60, title)
-            c.setFont("Helvetica", 14)
-            c.drawString(50, height-80, f"Présenté par {conseiller}")
-
+        width, height = A4  # Pour faciliter le positionnement
+        
+        # Couleurs ORPI
+        rouge_orpi = (228/255, 3/255, 46/255)  # #E4032E
+        gris_fonce = (45/255, 45/255, 45/255)  # #2D2D2D
+        gris_clair = (128/255, 128/255, 128/255)
+        
+        # En-tête
+        c.setFillColor(rouge_orpi)
+        c.rect(0, height-100, width, 100, fill=1)
+        c.setFillColor('white')
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(50, height-60, "Dossier de candidature location")
+        c.setFont("Helvetica", 14)
+        c.drawString(50, height-80, f"Présenté par {conseiller}")
+        
+        # Fonction helper pour les sections
         def draw_section(title, y_position):
-            c.setFillColor(colors.HexColor('#E4032E'))
-            c.setFont("Helvetica-Bold", 14)
+            c.setFillColor(rouge_orpi)
+            c.setFont("Helvetica-Bold", 16)
             c.drawString(50, y_position, title)
+            c.setFillColor(gris_clair)
             c.line(50, y_position-5, width-50, y_position-5)
-            return y_position - 25
+            c.setFillColor(gris_fonce)
+            return y_position - 30
 
-        def draw_field(label, value, x, y, label_width=150):
+        # Fonction helper pour les champs
+        def draw_field(label, value, x, y, label_width=120):
             c.setFont("Helvetica-Bold", 10)
-            c.setFillColor(colors.HexColor('#2D2D2D'))
             c.drawString(x, y, label)
             c.setFont("Helvetica", 10)
-            c.drawString(x + label_width, y, str(value) if value else "")
+            c.drawString(x + label_width, y, str(value))
             return y - 20
 
-        # Page 1 - Locataire
-        draw_header("Dossier de candidature location")
-        
+        # Informations personnelles
         y = height - 150
-        y = draw_section("INFORMATIONS DU LOCATAIRE", y)
+        y = draw_section("Informations personnelles", y)
         
-        # État civil
+        # Colonne gauche
         x_left = 50
+        y_temp = y
+        y_temp = draw_field("Nom:", nom.upper(), x_left, y_temp)
+        y_temp = draw_field("Prénom:", prenom.title(), x_left, y_temp)
+        if nom_jeune_fille:
+            y_temp = draw_field("Nom de j. fille:", nom_jeune_fille.upper(), x_left, y_temp)
+        y_temp = draw_field("Date de naissance:", date_naissance.strftime("%d/%m/%Y"), x_left, y_temp)
+        y_temp = draw_field("Lieu de naissance:", lieu_naissance, x_left, y_temp)
+        
+        # Colonne droite
         x_right = width/2 + 50
-        y = draw_field("Nom:", nom_loc, x_left, y)
-        y = draw_field("Prénom:", prenom_loc, x_left, y)
-        if nom_jeune_fille_loc:
-            y = draw_field("Nom de jeune fille:", nom_jeune_fille_loc, x_left, y)
-        y = draw_field("Date de naissance:", date_naissance_loc.strftime("%d/%m/%Y"), x_left, y)
-        y = draw_field("Lieu de naissance:", f"{lieu_naissance_loc} ({departement_loc})", x_left, y)
-        y = draw_field("Nationalité:", nationalite_loc, x_left, y)
-        y = draw_field("Situation:", situation_loc, x_left, y)
+        y_temp = y
+        y_temp = draw_field("Nationalité:", nationalite, x_right, y_temp)
+        y_temp = draw_field("Situation:", situation, x_right, y_temp)
+        y_temp = draw_field("Téléphone:", telephone, x_right, y_temp)
+        y_temp = draw_field("Email:", email, x_right, y_temp)
+        
+        y = min(y_temp, y) - 30
 
-        # Coordonnées
-        y = y - 20
-        y = draw_section("COORDONNÉES", y)
-        y = draw_field("Adresse:", adresse_loc, x_left, y)
-        y = draw_field("Code postal:", code_postal_loc, x_left, y)
-        y = draw_field("Ville:", ville_loc, x_left, y)
-        y = draw_field("Téléphone:", telephone_loc, x_left, y)
-        y = draw_field("Email:", email_loc, x_left, y)
-        y = draw_field("Situation actuelle:", situation_logement_loc, x_left, y)
-        if nb_enfants_loc > 0:
-            y = draw_field("Nombre d'enfants:", str(nb_enfants_loc), x_left, y)
-            y = draw_field("Âge des enfants:", ages_enfants_loc, x_left, y)
-
+        # Adresse actuelle
+        y = draw_section("Adresse actuelle", y)
+        y = draw_field("Adresse:", adresse, 50, y)
+        y = draw_field("Code postal:", code_postal, 50, y)
+        y = draw_field("Ville:", ville, 50, y)
+        y = draw_field("Statut:", situation_logement, 50, y)
+        
+        # Situation familiale
+        y = draw_section("Situation familiale", y-20)
+        y = draw_field("Nombre d'enfants:", str(nb_enfants), 50, y)
+        if nb_enfants > 0 and ages_enfants:
+            y = draw_field("Âge des enfants:", ages_enfants, 50, y)
+            
         # Situation professionnelle
-        y = y - 20
-        y = draw_section("SITUATION PROFESSIONNELLE", y)
-        y = draw_field("Profession:", profession_loc, x_left, y)
-        y = draw_field("Employeur:", employeur_loc, x_left, y)
-        y = draw_field("Date d'embauche:", date_embauche_loc.strftime("%d/%m/%Y"), x_left, y)
-        y = draw_field("Adresse employeur:", adresse_employeur_loc, x_left, y)
-        y = draw_field("CP et Ville employeur:", f"{cp_employeur_loc} {ville_employeur_loc}", x_left, y)
-        y = draw_field("Téléphone employeur:", tel_employeur_loc, x_left, y)
-
-        # Ressources
-        y = y - 20
-        y = draw_section("RESSOURCES", y)
-        y = draw_field("Revenus mensuels:", f"{revenus_loc:,.2f} €", x_left, y)
-        y = draw_field("Autres revenus:", f"{autres_revenus_loc:,.2f} €", x_left, y)
-        y = draw_field("Total des revenus:", f"{total_loc:,.2f} €", x_left, y)
-
-        # Page 2 - Garant
-        c.showPage()
-        draw_header("Dossier de cautionnement")
+        y = draw_section("Situation professionnelle", y-20)
         
-        y = height - 150
-        y = draw_section("INFORMATIONS DU GARANT", y)
+        # Colonne gauche
+        x_left = 50
+        y_temp = y
+        y_temp = draw_field("Profession:", profession, x_left, y_temp)
+        y_temp = draw_field("Employeur:", employeur, x_left, y_temp)
+        y_temp = draw_field("Date d'embauche:", date_embauche.strftime("%d/%m/%Y"), x_left, y_temp)
         
-        y = draw_field("Nom:", nom_gar, x_left, y)
-        y = draw_field("Prénom:", prenom_gar, x_left, y)
+        # Colonne droite
+        x_right = width/2 + 50
+        y_temp = y
+        y_temp = draw_field("Tél. employeur:", tel_employeur, x_right, y_temp)
+        
+        y = min(y_temp, y) - 20
+        
+        # Adresse employeur
+        y = draw_field("Adresse:", adresse_employeur, 50, y)
+        y = draw_field("Code postal:", cp_employeur, 50, y)
+        y = draw_field("Ville:", ville_employeur, 50, y)
+        
+        # Ressources financières
+        y = draw_section("Ressources financières", y-20)
+        y = draw_field("Revenus mensuels:", f"{revenus:,.2f} €", 50, y)
+        y = draw_field("Autres revenus:", f"{autres_revenus:,.2f} €", 50, y)
+        
+        c.setFillColor(rouge_orpi)
+        c.setFont("Helvetica-Bold", 12)
+        y = draw_field("TOTAL:", f"{total:,.2f} €", 50, y)
+        
+        # Pied de page
+        c.setFillColor(gris_clair)
+        c.setFont("Helvetica-Oblique", 8)
+        c.drawString(50, 30, "Document généré le " + datetime.now().strftime("%d/%m/%Y à %H:%M"))
+        c.drawString(50, 20, "Les informations contenues dans ce document sont strictement confidentielles")
+        
+        c.save()
+        buffer.seek(0)
+        return buffer
 
-
-def envoyer_pdf(pdf_buffer):
+    # Fonction pour envoyer le PDF par email
+    def envoyer_pdf(pdf_buffer):
         expediteur = "skita@orpi.com"
         destinataire = "kcouret@orpi.com" if conseiller == "Killian COURET" else "skita@orpi.com"
         
@@ -288,4 +289,3 @@ def envoyer_pdf(pdf_buffer):
                         file_name=f"dossier_candidature_{nom}_{prenom}.pdf",
                         mime="application/pdf"
                     )
-
