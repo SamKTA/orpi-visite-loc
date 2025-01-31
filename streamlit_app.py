@@ -33,7 +33,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Titre et introduction
-st.image("https://www.orpi.com/assets/logo-c1577257e2ef740f1763413a89583f2f.svg", width=200)
 st.title("Dossier de candidature location")
 
 # Sélection du conseiller
