@@ -55,7 +55,12 @@ with tabs[0]:
         prenom = st.text_input("PRÉNOM")
         
     with col2:
-        date_naissance = st.date_input("DATE DE NAISSANCE")
+        date_naissance = st.date_input(
+            "DATE DE NAISSANCE",
+            min_value=datetime(1940, 1, 1),
+            max_value=datetime.now(),
+            format="DD/MM/YYYY"
+        )
         lieu_naissance = st.text_input("LIEU DE NAISSANCE")
         departement = st.text_input("DÉPARTEMENT")
 
